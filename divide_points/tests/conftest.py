@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """Test helpers: load the plugin's modules by file path (as IngeTrazo
 does), and find IngeTrazo itself for the integration tests.
 

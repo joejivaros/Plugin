@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """The Divide Points dialog: modeless, follows the selection, previews the
 points in the viewport and places them as one undo step."""
 from __future__ import annotations

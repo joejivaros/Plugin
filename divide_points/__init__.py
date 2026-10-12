@@ -1,19 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """
 Plugin-ID:      divide_points
 Name:           Divide Points
 Version:        0.2.1
-Revision:       unversioned (no git repository yet)
-Release-Date:   2026-10-11T19:56:36Z
-Author:         <Author — G. Andreotti>
-Contact:        <gautier@andreotti.swiss>
+Revision:       git tag v0.2.1
+Release-Date:   2026-10-12T19:50:18Z
+Author:         G. Andreotti
+Contact:        https://github.com/joejivaros
 IngeTrazo:      >=0.5.7 (tested 0.5.7)
 AI-Assistance:  full
                 - Claude Opus 5.5 (claude-opus-5-5): all code, tests,
                   translations and documentation of versions 0.1.0 to
                   0.2.1, the QPainter-drawn toolbar icon and the
-                  French translation
+                  French translation; packaging for the extensions
+                  index (header, licence, release archive)
 Dependencies:   none
 Permissions:    none
 Description:    Places visible measurement / guide points along the selected

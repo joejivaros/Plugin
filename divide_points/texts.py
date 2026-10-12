@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """The plugin's own UI translations: ``i18n/<lang>.json`` next to this file.
 
 Same format as IngeTrazo's ``i18n/es.json`` — a flat map from the English

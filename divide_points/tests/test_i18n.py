@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """Every UI string is in the catalogs, and the catalogs agree."""
 from __future__ import annotations
 

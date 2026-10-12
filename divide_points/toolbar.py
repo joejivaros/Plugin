@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """The optional Divide Points toolbar and its icon.
 
 The icon is drawn with QPainter (no image file), the way IngeTrazo draws

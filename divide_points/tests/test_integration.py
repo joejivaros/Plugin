@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """The plugin inside IngeTrazo: loading, undo, saving, dialog, overlay.
 
 Runs headless (``QT_QPA_PLATFORM=offscreen``); skipped when IngeTrazo is

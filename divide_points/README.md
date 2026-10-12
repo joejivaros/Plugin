@@ -1,12 +1,12 @@
 # Divide Points
 
-An plugin that places **visible measurement / guide points** along
+A plugin that places **visible measurement / guide points** along
 the selected lines and curves.
 
 - Plugin ID: `divide_points` · Version: 0.2.1 · License: GPL-3.0-or-later
-- Date: Cotober 11 2026
+- Date: October 12 2026
 - Needs IngeTrazo ≥ 0.5.7 (extension API 2); tested with 0.5.7.
-- Author / contact: JoeJivaros joejivaros@google.com.
+- Author: G. Andreotti · Contact: https://github.com/joejivaros
 - Developed with the assistance of Claude AI, Opus 5.5 (Medium)
 
 ## Install

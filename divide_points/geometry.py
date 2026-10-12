@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """Pure geometry for Divide Points: no Qt, no IngeTrazo imports.
 
 Two jobs:

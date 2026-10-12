@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 <Author>
+# Copyright (C) 2026 G. Andreotti
 """Divide Points ↔ the IngeTrazo document.
 
 * the selected lines and curves → :class:`geometry.Path` objects;
