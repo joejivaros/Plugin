@@ -6,8 +6,8 @@ Name:           Divide Points
 Version:        0.2.1
 Revision:       unversioned (no git repository yet)
 Release-Date:   2026-10-11T19:56:36Z
-Author:         <Author — TODO: fill in before release>
-Contact:        <Contact — TODO: fill in before release>
+Author:         <Author — G. Andreotti>
+Contact:        <gautier@andreotti.swiss>
 IngeTrazo:      >=0.5.7 (tested 0.5.7)
 AI-Assistance:  full
                 - Claude Opus 5.5 (claude-opus-5-5): all code, tests,

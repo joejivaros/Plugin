@@ -258,3 +258,5 @@ Before finishing any task, check and report each item:
 - [ ] Bandit clean (or findings explained)
 - [ ] Model edits go through the history; saved data under the Plugin ID
 - [ ] Tests pass; plugin loads without a `⚠ (load error)` entry
+## 8. 
+@.cursor\rules\karpathy-guidelines.mdc
