@@ -3,7 +3,7 @@
 An plugin that places **visible measurement / guide points** along
 the selected lines and curves.
 
-- Plugin ID: `divide_points` · Version: 0.2.0 · License: GPL-3.0-or-later
+- Plugin ID: `divide_points` · Version: 0.2.1 · License: GPL-3.0-or-later
 - Date: Cotober 11 2026
 - Needs IngeTrazo ≥ 0.5.7 (extension API 2); tested with 0.5.7.
 - Author / contact: JoeJivaros joejivaros@google.com.
@@ -69,6 +69,13 @@ own small crosses: the drawing tools snap to them, they are saved in the
 **Delete Placed Points** in the dialog erases only the guide points this
 plugin placed (one undo step).
 
+## Languages
+
+English, Spanish and French (`i18n/en.json`, `es.json`, `fr.json`). The
+plugin follows IngeTrazo's UI language; IngeTrazo 0.5.7 offers no French
+yet, so `fr.json` takes effect once it does. Other languages fall back to
+English.
+
 ## Permissions
 
 `none` — the plugin only edits the open model. No network, no files outside
@@ -121,4 +128,4 @@ python -m bandit -r divide_points
 Files: `__init__.py` (header, constants, setup), `geometry.py`
 (pure-Python placement rules), `scene_ops.py` (selection, commands,
 preview overlay), `ui.py` (dialog), `toolbar.py` (toolbar and icon),
-`texts.py` (translations), `i18n/` (en, es).
+`texts.py` (translations), `i18n/` (en, es, fr).

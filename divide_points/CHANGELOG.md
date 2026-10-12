@@ -2,6 +2,11 @@
 
 All notable changes; newest first. Versions follow Semantic Versioning.
 
+## 0.2.1 — 2026-10-11
+
+- Added: French translation (`i18n/fr.json`). It is used once IngeTrazo
+  offers French as a UI language (0.5.7 does not yet).
+
 ## 0.2.0 — 2026-10-11
 
 * New: **Extensions ▸ Divide Points ▸ Show in toolbar** check box shows a

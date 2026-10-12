@@ -3,16 +3,17 @@
 """
 Plugin-ID:      divide_points
 Name:           Divide Points
-Version:        0.2.0
+Version:        0.2.1
 Revision:       unversioned (no git repository yet)
-Release-Date:   2026-10-11T18:28:17Z
+Release-Date:   2026-10-11T19:56:36Z
 Author:         <Author — TODO: fill in before release>
 Contact:        <Contact — TODO: fill in before release>
 IngeTrazo:      >=0.5.7 (tested 0.5.7)
 AI-Assistance:  full
                 - Claude Opus 5.5 (claude-opus-5-5): all code, tests,
-                  translations and documentation of versions 0.1.0 and
-                  0.2.0, and the QPainter-drawn toolbar icon
+                  translations and documentation of versions 0.1.0 to
+                  0.2.1, the QPainter-drawn toolbar icon and the
+                  French translation
 Dependencies:   none
 Permissions:    none
 Description:    Places visible measurement / guide points along the selected
@@ -27,7 +28,7 @@ from .texts import t
 
 PLUGIN_ID = "divide_points"
 NAME = "Divide Points"
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 
 log = logging.getLogger("ingetrazo.plugins")
 

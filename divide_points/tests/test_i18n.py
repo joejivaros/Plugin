@@ -9,7 +9,7 @@ import string
 
 from conftest import PLUGIN_DIR
 
-LANGS = ("en", "es")
+LANGS = ("en", "es", "fr")
 
 
 def _catalog(lang):

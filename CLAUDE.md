@@ -14,6 +14,12 @@ Keywords: **MUST** = never skip. **SHOULD** = default; explain any deviation.
 - Read `docs/plugins.md` and `CONTRIBUTING.md` in the IngeTrazo repo if they
   are available. The plugin API is 0.x and may have changed since this file
   was written; the repo docs win over this file on API details.
+- The IngeTrazo repo is NOT in this folder. Clone it into a scratch folder to
+  read the source (`core/`, `views/extension_api.py`, `tools/`); the version
+  is in `core/version.py`. On this Windows machine git's OpenSSL lacks the CA
+  store: use `git -c http.sslBackend=schannel clone --depth 1 <url>`.
+- Section 5a lists API facts verified on IngeTrazo 0.5.7; re-check them in
+  the source when targeting another version.
 - Use the bundled reference plugins (`plugins/model_info.py`,
   `plugins/solid_inspector.py`, `plugins/ai_assistant.py`) as models.
 - Ask the user for author name, contact and target IngeTrazo version if they
@@ -90,8 +96,18 @@ Plugin ID:
 - **No hardcoded UI text (MUST).** Every user-facing string goes through the
   plugin's `i18n/<lang>.json` (flat map: English source text → translation,
   same format as IngeTrazo's `i18n/es.json`). Missing keys fall back to
-  English. When you add a string, add it to `en.json` and `es.json` in the same
-  change.
+  English. When you add a string, add it to `en.json` and `es.json` (and
+  every other catalog the plugin ships) in the same change.
+  - Make the plugin's `en.json` the identity map (`"X": "X"`), so it lists
+    every key; the other catalogs must have exactly the same keys.
+  - The host's `core.i18n.tr` only knows IngeTrazo's own strings. Look up
+    the plugin's catalog yourself, picking the language with
+    `core.i18n.current_language()`. The language is set before plugins
+    load, so translating class attributes at import time works.
+  - A plugin catalog is only used for a language IngeTrazo itself offers.
+    In 0.5.7 those are en, es, pt-BR, zh-CN, it, id (no French yet).
+  - Enforce all this with a test that collects the `t("...")` literals via
+    `ast` (see `divide_points/tests/test_i18n.py`).
 - **English** for identifiers, comments, docstrings and commit messages.
 - **PEP 8**, soft 100-character lines, docstrings on public functions,
   descriptive names.
@@ -145,6 +161,50 @@ MUST be declared in `Permissions:` and explained in the README.
 - Semantic Versioning: MAJOR = breaking change to saved data or behaviour,
   MINOR = feature, PATCH = fix. Add a CHANGELOG entry for every version.
 
+## 5a. API facts learned (verified on IngeTrazo 0.5.7)
+
+- **32-bit coordinates.** `QVector3D`, used by vertices and guides, stores
+  32-bit floats. Before comparing or keying a computed (64-bit) point
+  against stored geometry, pass it through `QVector3D` first. Otherwise
+  matches fail, often far from the origin. `divide_points` 0.1.0 had this
+  bug.
+- **Guides.** They live in `scene.guides` as `core.guide.Guide` objects.
+  `Guide(point)` with no direction is a guide point: the host draws it as a
+  small cross, snaps to it and saves it. Add guides with `AddGuideCommand`
+  and remove them with `DeleteGuidesCommand` (`core.history`).
+- **One undo step for several changes.** Wrap the sub-commands in one
+  `core.history.Command` subclass: `do` runs them in order, `undo` runs them
+  in reverse. Combine with `SetPluginDataCommand(key, value)` for document
+  data (`scene.plugin_data[key]`, JSON only). Run it through
+  `viewport.history.execute(cmd)`, check `history.last_error`, then call
+  `viewport.notify_scene_changed()`.
+- **Selection.** `scene.selection` holds `Edge`, `Face`, `Group` and `Guide`
+  objects. The Select tool already adds every segment of a curve (edges
+  sharing `Edge.curve`). `Edge.a` and `Edge.b` are positions. An open
+  group's mesh (`scene.mesh`) is edited in world coordinates.
+- **Units.**
+  - `core.units.model_unit()` gives the unit code.
+  - `bare_number_scale()` gives metres per typed number. The feet-and-inches
+    styles read bare numbers as inches.
+  - `fmt_len(metres)` formats a length for display.
+- **Loading.** A package loads as `ingetrazo_plugin_<plugin_id>` with
+  relative imports allowed. Submodules exist only once something imports
+  them.
+- **Menus.** A plugin with only `setup()` (no `Tool` subclass) can use
+  `app.add_menu(title)` for a submenu, but its entries are not in the F3
+  command search. Say so in the README.
+- **Toolbars.**
+  - Build them with `app.window._new_toolbar(title, "<plugin_id>_toolbar")`.
+    This is an internal: fall back to a plain `QToolBar`, and list it in the
+    README.
+  - `setup(app)` runs after the window restored its saved layout, so a
+    plugin toolbar's position is not restored between sessions.
+  - Keep on/off choices in `QSettings` under `plugins/<plugin_id>/…`. That
+    is IngeTrazo's own per-user settings store.
+- **Icons.** Draw them with QPainter like `views/icons.py`: 48 px, the
+  palette's `windowText` as ink, a 3 px round pen and the orange accent
+  `QColor(243, 115, 41)`. Redraw on `PaletteChange` / `ThemeChange`.
+
 ## 6. Commands
 
 Run these from the IngeTrazo repo root (or adapt paths). Run them before
@@ -156,6 +216,28 @@ python -m pytest <plugin_id>/tests -q     # plugin tests
 python -m bandit -r <plugin_id>           # security scan (pip install bandit)
 grep -rEn '[A-Za-z0-9+/=]{200,}' <plugin_id>   # flags encoded blobs; must return nothing
 ```
+
+Testing notes (learned on this machine, Windows):
+
+- **Environment.** Use a venv in a scratch folder with only
+  `PySide6 numpy pytest bandit`. IngeTrazo's `requirements.txt` pulls
+  `openskp` from git, which fails here on SSL, and headless plugin tests do
+  not need it.
+- **Headless runs.** Set `QT_QPA_PLATFORM=offscreen` and
+  `INGETRAZO_ROOT=<IngeTrazo checkout>`. Integration tests skip themselves
+  when IngeTrazo cannot be imported.
+- **`tests/pytest.ini`.** Put one in the plugin's tests folder. Without it,
+  pytest imports the package's `__init__.py` (which needs IngeTrazo) and
+  every test errors when IngeTrazo is absent.
+- **Loading in tests.** Load the plugin as the app does: copy it to a temp
+  folder and call `core.extensions.discover_plugins([folder])`; an error
+  there is a `⚠ (load error)`. Import lazily loaded submodules with
+  `importlib.import_module("ingetrazo_plugin_<id>.<module>")`.
+- **Bandit.** Run `python -m bandit -r <plugin_id> -x <plugin_id>/tests` for
+  the plugin code. B101 (`assert`) in pytest tests is expected.
+- **IngeTrazo's own suite.** The fast suite only matters when IngeTrazo
+  itself changes. If its dependencies are missing, say so; don't skip it
+  silently.
 
 Run the app with `python main.py`; plugins load from
 `~/.local/share/ingetrazo/plugins/` (Linux), `%APPDATA%\ingetrazo\plugins\`
@@ -169,7 +251,8 @@ Before finishing any task, check and report each item:
 - [ ] `AI-Assistance` updated with this session's model and contribution
 - [ ] Package layout present: `i18n/en.json`, `README.md`, `CHANGELOG.md`
 - [ ] No encoded payloads, embedded media or compiled-only files
-- [ ] No hardcoded UI strings; `en.json` and `es.json` have identical keys
+- [ ] No hardcoded UI strings; all `i18n/*.json` catalogs have identical keys
+- [ ] Positions compared with stored geometry go through `QVector3D` first
 - [ ] Media files listed in `media/LICENSE-media`
 - [ ] No `eval`/`exec`/pickle; `Permissions:` matches what the code does
 - [ ] Bandit clean (or findings explained)
