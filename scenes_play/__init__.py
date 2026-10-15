@@ -3,7 +3,7 @@
 """
 Plugin-ID:      scenes_play
 Name:           Scene Automation
-Version:        0.2.0
+Version:        0.2.1
 Revision:       0.2.1
 Release-Date:   2026-10-15T16:00:00Z
 Author:         G. Andreotti
