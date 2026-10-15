@@ -18,8 +18,10 @@ Keywords: **MUST** = never skip. **SHOULD** = default; explain any deviation.
   read the source (`core/`, `views/extension_api.py`, `tools/`); the version
   is in `core/version.py`. On this Windows machine git's OpenSSL lacks the CA
   store: use `git -c http.sslBackend=schannel clone --depth 1 <url>`.
-- Section 5a lists API facts verified on IngeTrazo 0.5.7; re-check them in
-  the source when targeting another version.
+- Section 5a lists API facts verified on IngeTrazo 0.5.7 and re-checked on
+  0.5.8; re-check them in the source when targeting another version. A
+  local 0.5.8 checkout is at
+  `D:\Documents\Developement\IngeTrazo\Sources\ingetrazo-main`.
 - Use the bundled reference plugins (`plugins/model_info.py`,
   `plugins/solid_inspector.py`, `plugins/ai_assistant.py`) as models.
 - Ask the user for author name, contact and target IngeTrazo version if they
@@ -105,7 +107,7 @@ Plugin ID:
     `core.i18n.current_language()`. The language is set before plugins
     load, so translating class attributes at import time works.
   - A plugin catalog is only used for a language IngeTrazo itself offers.
-    In 0.5.7 those are en, es, pt-BR, zh-CN, it, id (no French yet).
+    In 0.5.8 those are en, es, fr, de, pl, it, id, pt-BR, zh-CN.
   - Enforce all this with a test that collects the `t("...")` literals via
     `ast` (see `divide_points/tests/test_i18n.py`).
 - **English** for identifiers, comments, docstrings and commit messages.
@@ -161,7 +163,7 @@ MUST be declared in `Permissions:` and explained in the README.
 - Semantic Versioning: MAJOR = breaking change to saved data or behaviour,
   MINOR = feature, PATCH = fix. Add a CHANGELOG entry for every version.
 
-## 5a. API facts learned (verified on IngeTrazo 0.5.7)
+## 5a. API facts learned (verified on IngeTrazo 0.5.7, re-checked 0.5.8)
 
 - **32-bit coordinates.** `QVector3D`, used by vertices and guides, stores
   32-bit floats. Before comparing or keying a computed (64-bit) point
@@ -192,7 +194,45 @@ MUST be declared in `Permissions:` and explained in the README.
   them.
 - **Menus.** A plugin with only `setup()` (no `Tool` subclass) can use
   `app.add_menu(title)` for a submenu, but its entries are not in the F3
-  command search. Say so in the README.
+  command search. Say so in the README. A single entry from
+  `app.add_menu_action(text, fn, tip=...)` IS found by F3.
+- **Scenes and camera** (internals, no API call yet; see `scenes_play/host.py`).
+  - Scenes are `scene.saved_views`, a list of `core.saved_views.SavedView`
+    (`name`, `target`, `distance`, `yaw`, `pitch`, `fov_deg`, `perspective`
+    plus layers/style/section/shadows). Names are unique.
+  - `viewport.camera` is a `core.camera.OrbitCamera` with the same fields;
+    set them and call `viewport.update()`.
+  - Show a scene the way the app does with
+    `window.tray.scenes._on_activate(row)` (rows in `tray.scenes.list`,
+    `row.data(Qt.UserRole)` is the view), as `views/outliner.py` does.
+  - The document is dirty when `scene.version != window._saved_version`;
+    the Scenes panel bumps `scene.version` only when layers/style/etc.
+    change, not for a camera-only scene.
+- **Tools.** `window._tools` maps keys to tool objects;
+  `window._activate_tool(key)` switches (e.g. `"look_around"`, `"select"`);
+  `viewport.active_tool` is the current one.
+- **Dialogs.** `QDialog.closeEvent` calls `reject()`. A dialog whose
+  `reject()` calls `close()` (so Esc gets the unsaved-changes prompt) must
+  end its `closeEvent` with `event.accept()`, not `super().closeEvent()`,
+  or the close is cancelled.
+- **The installed build is not pip PySide6.** PyInstaller ships only what
+  IngeTrazo imports. The 0.5.8 Windows build has no `PySide6.QtMultimedia`,
+  `wave`, `winsound` or FFmpeg; it has `subprocess`, `tempfile`, `shutil`,
+  `ctypes`, QtNetwork, QtSvg, QtPdf. Check a module before relying on it:
+  `C:\Program Files\IngeTrazo\_internal\PySide6\` lists the Qt modules,
+  and the stdlib ones are in the PYZ archive inside `ingetrazo.exe`
+  (parse its table of contents; a plain `grep` misses them).
+  `scenes_play` uses the user's FFmpeg (`media.py`) for sound and video.
+- **Offscreen images.** `viewport.render_image(w, h, overlays=False)`
+  renders any size; set `camera.aspect` to `w / h` around it (the sheet
+  composer does). It returns `None` under `QT_QPA_PLATFORM=offscreen` (no
+  OpenGL), so tests feed synthetic frames.
+- **Extensions index (0.5.8).** Extensions ▸ Manage extensions… installs
+  from the catalog; a release `.zip` holds ONE folder with `__init__.py`.
+  The bot (`tools/catalog.py`) reports imports of `subprocess`, `socket`,
+  `urllib`, `http`, `requests`, `ctypes`, `shutil`, `pickle`, `marshal`,
+  bare `eval`/`exec`/`compile`/`__import__`, and `.system`/`.popen`/
+  `.unlink`/`.rmtree` calls; keep these out of shipped code.
 - **Toolbars.**
   - Build them with `app.window._new_toolbar(title, "<plugin_id>_toolbar")`.
     This is an internal: fall back to a plain `QToolBar`, and list it in the
@@ -233,6 +273,18 @@ Testing notes (learned on this machine, Windows):
   folder and call `core.extensions.discover_plugins([folder])`; an error
   there is a `⚠ (load error)`. Import lazily loaded submodules with
   `importlib.import_module("ingetrazo_plugin_<id>.<module>")`.
+- **Pure modules.** Keep `__init__.py` free of IngeTrazo/Qt imports at
+  module level; tests can then load the package with
+  `spec_from_file_location(name, init, submodule_search_locations=[dir])`
+  and test the plain-Python modules without IngeTrazo
+  (`scenes_play/tests/conftest.py`).
+- **Real window.** `views.main_window.MainWindow()` builds offscreen, as in
+  IngeTrazo's `tests/test_scene_recall_version.py`; use it for one smoke
+  test of internals. It loads the user's installed plugins, and an
+  installed copy of the plugin under test replaces its
+  `ingetrazo_plugin_<id>` module: monkeypatch
+  `core.extensions.user_plugins_dir` to an empty folder first. Set `QT_QPA_FONTDIR=C:/Windows/Fonts` when grabbing a
+  screenshot, or text renders as boxes.
 - **Bandit.** Run `python -m bandit -r <plugin_id> -x <plugin_id>/tests` for
   the plugin code. B101 (`assert`) in pytest tests is expected.
 - **IngeTrazo's own suite.** The fast suite only matters when IngeTrazo
