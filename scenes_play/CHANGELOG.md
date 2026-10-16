@@ -2,6 +2,11 @@
 
 All notable changes; newest first. Versions follow Semantic Versioning.
 
+## 0.2.1 — 2026-10-15
+
+* First release for the extensions index (release archive, header). No
+  change in behaviour from 0.2.0.
+
 ## 0.2.0 — 2026-10-15
 
 * New: **sounds**. Attach a sound file to a scene (Sound column or

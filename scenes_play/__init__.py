@@ -4,7 +4,7 @@
 Plugin-ID:      scenes_play
 Name:           Scene Automation
 Version:        0.2.1
-Revision:       0.2.1
+Revision:       git tag scenes_play-v0.2.1
 Release-Date:   2026-10-15T16:00:00Z
 Author:         G. Andreotti
 Contact:        https://github.com/joejivaros
@@ -35,7 +35,7 @@ from .texts import t
 
 PLUGIN_ID = "scenes_play"
 NAME = "Scene Automation"
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 
 log = logging.getLogger("ingetrazo.plugins")
 

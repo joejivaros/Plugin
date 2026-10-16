@@ -1,13 +1,31 @@
 # Scene Automation
 
-A plugin that **plays the model's scenes in a sequence** with smooth,
-cinematic camera moves. For each scene you set how fast the move starts and
-stops, how long it travels and how long the scene stays on screen, and you
-can attach a sound. You can loop the sequence, play it full screen, pause it
-and look around, export it as an MP4 video, save it to a file or keep it in
-the model.
+IngeTrazo has a built-in function for playing back scenes, I discovered this only after I had already begun developing a similar plugin. It seems to me that mine offers a bit more flexibility:
+1- My plugin uses existing scenes; there is no need to recreate scenes specifically for a cinematic sequence.
+2- When the plugin is opened, the scenes appear in an "Inactive" window.
+3- You can drag and drop scenes from the "Inactive" window to the "Active" window. Use "Ctrl+click" for individual selections and "Shift+click" for a continuous range of selections. Within the "Active" window, use "Ctrl+D" to duplicate a scene.
+4- The order of scenes in the "Active" window can be changed via click-and-drag.
+5- Transitions can be applied globally or on a per-scene basis.
+6- A scene in the "Active" window can be deselected, in which case it will not be played.
+7- The sequence (scenario) can be saved and loaded. Multiple sequences can be created for the same 3D drawing.
+8- An audio file can be associated with each scene and will play automatically.
+9- While a sequence is running, the plugin minimizes, leaving only three buttons visible: Pause, Start, and Stop. During a pause, IngeTrazo’s navigation tools remain functional.
 
-- Plugin ID: `scenes_play` · Version: 0.2.0 · License: GPL-3.0-or-later
+A plugin that **plays the model's scenes in a sequence** with smooth,
+cinematic camera moves. For each scene you set how fast the move starts and stops, how long it travels and how long the scene stays on screen, and you can attach a sound. You can loop the sequence, play it full screen, pause it and look around, export it as an MP4 video, save it to a file or keep it in the model.
+There is already a similar function in IngeTrazo, I discovered this only after I had already begun developing a similar plugin. It seems to me that mine offers a bit more flexibility:
+1- My plugin uses existing scenes; there is no need to recreate scenes specifically for a cinematic sequence.
+2- When the plugin is opened, the scenes appear in an "Inactive" window.
+3- You can drag and drop scenes from the "Inactive" window to the "Active" window. Use "Ctrl+click" for individual selections and "Shift+click" for a continuous range of selections. Within the "Active" window, use "Ctrl+D" to duplicate a scene.
+4- The order of scenes in the "Active" window can be changed via click-and-drag.
+5- Transitions can be applied globally or on a per-scene basis.
+6- A scene in the "Active" window can be deselected, in which case it will not be played.
+7- The sequence (scenario) can be saved and loaded. Multiple sequences can be created for the same 3D drawing.
+8- An audio file can be associated with each scene and will play automatically.
+9- While a sequence is running, the plugin minimizes, leaving only three buttons visible: Pause, Start, and Stop. During a pause, IngeTrazo’s navigation tools remain functional.
+Tested on Windows 11 and Ubuntu, not tested on MacOs
+
+- Plugin ID: `scenes_play` · Version: 0.2.1 · License: GPL-3.0-or-later
 - Needs IngeTrazo ≥ 0.5.8 (extension API 2); tested with 0.5.8.
 - Author: G. Andreotti · Contact: https://github.com/joejivaros
 - Developed with the assistance of Claude AI, Opus 5.5
@@ -30,9 +48,7 @@ works without it.
 - Linux: your package manager (`sudo apt install ffmpeg`).
 - macOS: `brew install ffmpeg`.
 
-If FFmpeg is on the `PATH` it is found by itself; otherwise the plugin asks
-for its folder the first time (or **Export MP4… ▸ FFmpeg folder…**) and
-remembers it.
+If FFmpeg is on the `PATH` it is found by itself; otherwise the plugin asks for its folder the first time (or **Export MP4… ▸ FFmpeg folder…**) and remembers it.
 
 ## Use
 

@@ -165,7 +165,7 @@ def test_plugin_loads_with_a_setup(plugin):
     assert loaded.tools == []
     assert loaded.setup is not None
     assert plugin["pkg"].PLUGIN_ID == KEY
-    assert plugin["pkg"].VERSION == "0.2.0"
+    assert plugin["pkg"].VERSION == "0.2.1"
 
 
 def test_header_matches_constants(plugin):
