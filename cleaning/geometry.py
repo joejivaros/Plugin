@@ -128,19 +128,55 @@ def erase_zero_length_edges(mesh, edges=None) -> int:
     return remove_edges(mesh, doomed)
 
 
+def check_loops(mesh) -> None:
+    """Raise ``ValueError`` if a face's outline or a hole has fewer than
+    three points: IngeTrazo 0.5.9's ``.igz`` writer fails on such a face
+    ("list index out of range")."""
+    for f in mesh.faces:
+        if len(f.loop) < 3 or any(len(h) < 3 for h in f.hole_loops):
+            raise ValueError("a face was left with fewer than three corners")
+
+
 def _without_repeats(loop: list) -> list:
     """``loop`` without a corner that repeats the one before it."""
     return [v for k, v in enumerate(loop) if v is not loop[k - 1]] or loop[:1]
 
 
+def _drop_empty_holes(mesh, face) -> list:
+    """Remove the holes of ``face`` with fewer than three distinct corners
+    (no area: ``[a, b]`` or ``[a, a, b, b]``). IngeTrazo 0.5.9 cannot save
+    a hole of fewer than three points. Returns the edges that bounded only
+    such a hole and now bound nothing."""
+    empty = [h for h in face.hole_loops if len({id(v) for v in h}) < 3]
+    if not empty:
+        return []
+    hole_edges = {}
+    for h in empty:
+        for i in range(len(h)):
+            e = mesh.find_edge(h[i], h[(i + 1) % len(h)])
+            if e is not None:
+                hole_edges[id(e)] = e
+    face.hole_loops = [h for h in face.hole_loops if not any(h is x for x in empty)]
+    sides = {id(e) for e in face_edges(mesh, face)}
+    bare = []
+    for e in hole_edges.values():
+        if id(e) not in sides:
+            _forget_face(face, [e])
+            if not e.faces:
+                bare.append(e)
+    return bare
+
+
 def repair_repeated_corners(mesh, faces=None) -> int:
     """Drop the corners a face loop lists twice in a row (``[a, a, b, c]``,
-    a triangle some importers store as a quad). The face keeps its edges
-    and its shape, but IngeTrazo cannot merge such a face with its
-    neighbour until the repeat is gone. Returns how many faces changed."""
+    a triangle some importers store as a quad), and the holes that have no
+    area left. The face keeps its shape, but IngeTrazo cannot merge such a
+    face with its neighbour (nor save a two-point hole) until the repeat is
+    gone. Returns how many faces changed."""
     pool = list(mesh.faces) if faces is None else list(faces)
     alive = set(mesh.faces)
     fixed = 0
+    bare: list = []
     for f in pool:
         if f not in alive:
             continue
@@ -150,11 +186,16 @@ def repair_repeated_corners(mesh, faces=None) -> int:
             if len(clean) != len(loop):
                 loop[:] = clean
                 changed = True
-        if changed:
-            fixed += 1
-            # The repeat was a side from a corner to itself: its self-loop
-            # edge no longer bounds this face.
-            _forget_face(f, [e for e in _edges_around(f) if e.v0 is e.v1])
+        empty = any(len({id(v) for v in h}) < 3 for h in f.hole_loops)
+        if not (changed or empty):
+            continue
+        fixed += 1
+        # The repeat was a side from a corner to itself: its self-loop edge
+        # no longer bounds this face (found before an empty hole goes).
+        loops = [e for e in _edges_around(f) if e.v0 is e.v1]
+        bare += _drop_empty_holes(mesh, f)
+        _forget_face(f, loops)
+    remove_edges(mesh, bare)
     if fixed:
         # Loops edited in place bypass the mesh primitives: say so to the
         # viewport's caches as the primitives do.

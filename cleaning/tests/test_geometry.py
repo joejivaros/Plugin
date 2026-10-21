@@ -129,6 +129,32 @@ def test_repeated_corner_is_repaired_and_the_face_merges(plugin, mesh):
     assert geo.merge_coplanar_faces(mesh) == 1
 
 
+def test_hole_without_area_is_removed_and_the_face_saves(plugin, mesh):
+    """Deram_house.igz: holes listed as ``[a, a, b, b]``. Shortened to
+    ``[a, b]`` they made IngeTrazo's save fail ("index out of range")."""
+    geo = plugin["geo"]
+    face = mesh.add_face([v(0, 0), v(4, 0), v(4, 4), v(0, 4)],
+                         [[v(1, 1), v(2, 2), v(2, 1)]])
+    a, b = face.hole_loops[0][0], face.hole_loops[0][1]
+    face.hole_loops[0][:] = [a, a, b, b]
+    assert geo.repair_repeated_corners(mesh) == 1
+    assert face.hole_loops == []
+    geo.check_loops(mesh)                        # savable
+    assert all(face not in e.faces for e in mesh.edges
+               if e.v0 in (a, b) and e.v1 in (a, b))
+    from formats.igz import _mesh_json
+    _mesh_json(mesh, {})
+
+
+def test_check_loops_refuses_a_two_point_hole(plugin, mesh):
+    geo = plugin["geo"]
+    face = mesh.add_face([v(0, 0), v(4, 0), v(4, 4), v(0, 4)],
+                         [[v(1, 1), v(2, 2), v(2, 1)]])
+    face.hole_loops[0][:] = face.hole_loops[0][:2]
+    with pytest.raises(ValueError):
+        geo.check_loops(mesh)
+
+
 def test_duplicate_face_goes(plugin, mesh):
     geo = plugin["geo"]
     pts = [v(0, 0), v(1, 0), v(1, 1), v(0, 1)]

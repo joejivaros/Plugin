@@ -2,6 +2,18 @@
 
 All notable changes; newest first. Versions follow Semantic Versioning.
 
+## 0.1.1 — 2026-10-21
+
+- Fixed: after cleaning some models, saving failed with "list index out of
+  range" and the model could not be saved. A hole listing only two points
+  twice (`a, a, b, b`, left by an import) became a two-point hole once its
+  repeated corners were repaired, and IngeTrazo cannot save a hole of fewer
+  than three points. **Repair degenerate faces** now removes holes that
+  have no area. Seen on a 175,000-face house model.
+- Added: a safety check. If a clean-up would ever leave a face with fewer
+  than three corners, it is rolled back whole and the dialog says it
+  failed, instead of leaving a model that cannot be saved.
+
 ## 0.1.0 — 2026-10-21
 
 First release.

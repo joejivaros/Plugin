@@ -236,6 +236,9 @@ class CleanCommand(Command):
         opts, report = self.options, self.report
         for mesh, faces, edges in work:
             _clean_mesh(mesh, faces, edges, opts, report)
+            # Never hand back a model IngeTrazo cannot save: raising here
+            # rolls the whole clean-up back.
+            geometry.check_loops(mesh)
         if mapping:
             report["duplicate_materials"] = document.merge_materials(
                 scene, mapping)

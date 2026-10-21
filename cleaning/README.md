@@ -4,7 +4,7 @@ A plugin that **cleans a model** in one undo step: it purges what is unused
 and repairs the geometry left behind by imports and editing. You pick which
 items to clean.
 
-- Plugin ID: `cleaning` · Version: 0.1.0 · License: GPL-3.0-or-later
+- Plugin ID: `cleaning` · Version: 0.1.1 · License: GPL-3.0-or-later
 - Date: October 21 2026
 - Needs IngeTrazo ≥ 0.5.9 (extension API 2); tested with 0.5.9.
 - Author: G. Andreotti · Contact: https://github.com/joejivaros
@@ -33,7 +33,7 @@ The dialog is modeless and remembers your choices between sessions.
 
 | Item | What it does |
 |---|---|
-| Repair degenerate faces | Erases faces with no area (fewer than three distinct corners, or all corners on one line) and the edges only they used. Also repairs faces whose loop lists a corner twice in a row (`a, a, b, c`, a triangle some importers store as a quad), and erases the zero-length edges such a repeat leaves (an edge from a point to itself). |
+| Repair degenerate faces | Erases faces with no area (fewer than three distinct corners, or all corners on one line) and the edges only they used. Also repairs faces whose loop lists a corner twice in a row (`a, a, b, c`, a triangle some importers store as a quad), removes holes with no area (fewer than three distinct points), and erases the zero-length edges such a repeat leaves (an edge from a point to itself). |
 | Erase duplicate faces | Erases a face that lies on exactly the same edges as another one. The face with more holes is kept; it takes the paint of the erased one if it had none. |
 | Merge coplanar faces | Removes the edge between two faces in the same plane, so they become one face. **Angle tolerance** (default 0.05°, up to 5°): faces whose planes differ by less count as coplanar. Keep it small, because a finely divided curved surface is not flat. **Only faces with the same material** (on by default) keeps the edge between faces painted differently. Faces on different layers or with different BIM tags are never merged, and neither are faces facing opposite ways. |
 | Erase stray edges | Erases edges that border no face. A mesh made only of lines (a plan, a profile waiting for Follow Me) is left alone. |
@@ -127,7 +127,11 @@ IngeTrazo internals, which may change in a later 0.x release:
   `QToolBar` as a fallback.
 - `history.last_error` and `history.last_rejected`.
 
-Two workarounds for IngeTrazo 0.5.9:
+Workarounds for IngeTrazo 0.5.9:
+- The `.igz` writer fails ("list index out of range") on a face whose
+  outline or a hole has fewer than three points. The plugin removes holes
+  with no area, and checks every cleaned mesh before finishing: if a face
+  would be left like that, the whole clean-up is rolled back.
 - `Mesh.dissolve_coplanar_pair` raises `IndexError` when two faces' union
   has no outline. It does so before changing anything, so the plugin treats
   that pair as not mergeable.
