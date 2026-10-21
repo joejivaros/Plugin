@@ -2,6 +2,17 @@
 
 All notable changes; newest first. Versions follow Semantic Versioning.
 
+## 0.2.2 — 2026-10-21
+
+- Fixed: with many extensions loaded, IngeTrazo became very slow (a click
+  went from about 2 s to 15 s in a reviewer's test on 0.5.9). The toolbar
+  icon's theme watcher was installed on the whole application and redrew
+  the icon on every widget's palette change, which some extensions trigger
+  on each mouse event. It now watches only its own toolbar, and redraws
+  only when the theme's ink colour really changed. Thanks to the
+  IngeTrazo reviewers for the report.
+- Tested with IngeTrazo 0.5.9.
+
 ## 0.2.1 — 2026-10-12
 
 - Added: French translation (`i18n/fr.json`). It is used once IngeTrazo

@@ -199,3 +199,36 @@ def test_whole_model_scope_is_off_inside_a_group(plugin, doc, qapp, settings):
         dlg.close()
     finally:
         doc.scene.end_group_edit()
+
+
+def test_icon_ignores_other_widgets_but_follows_the_theme(plugin, qapp, settings):
+    """Review of 0.5.9: an application-wide filter rebuilt the icon each
+    time another extension restyled one of its widgets."""
+    import importlib
+
+    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QLabel, QMainWindow
+    toolbar = importlib.import_module("ingetrazo_plugin_cleaning.toolbar")
+    win = QMainWindow()
+    others = [QLabel(str(i), win) for i in range(50)]
+    win.show()
+    switch = toolbar.ToolbarSwitch(win, "cleaning", "T", "tip", lambda: None)
+    switch.set_shown(True)
+    action = switch.toolbar.actions()[0]
+    built = action.icon().cacheKey()
+    for label in others:                       # another extension restyles
+        label.setStyleSheet("color: red")
+        label.setPalette(QPalette(QColor(10, 200, 10)))
+    qapp.processEvents()
+    assert action.icon().cacheKey() == built
+
+    old = qapp.palette()
+    new = QPalette(old)
+    new.setColor(QPalette.WindowText, QColor(250, 10, 10))
+    try:
+        qapp.setPalette(new)                   # the theme changed
+        qapp.processEvents()
+        assert action.icon().cacheKey() != built
+    finally:
+        qapp.setPalette(old)
+        win.close()

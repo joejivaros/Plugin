@@ -3,16 +3,16 @@
 """
 Plugin-ID:      divide_points
 Name:           Divide Points
-Version:        0.2.1
-Revision:       git tag v0.2.1
-Release-Date:   2026-10-12T19:50:18Z
+Version:        0.2.2
+Revision:       git tag divide_points-v0.2.2
+Release-Date:   2026-10-21T19:24:22Z
 Author:         G. Andreotti
 Contact:        https://github.com/joejivaros
-IngeTrazo:      >=0.5.7 (tested 0.5.7)
+IngeTrazo:      >=0.5.7 (tested 0.5.9)
 AI-Assistance:  full
                 - Claude Opus 5.5 (claude-opus-5-5): all code, tests,
                   translations and documentation of versions 0.1.0 to
-                  0.2.1, the QPainter-drawn toolbar icon and the
+                  0.2.2, the QPainter-drawn toolbar icon and the
                   French translation; packaging for the extensions
                   index (header, licence, release archive)
 Dependencies:   none
@@ -29,7 +29,7 @@ from .texts import t
 
 PLUGIN_ID = "divide_points"
 NAME = "Divide Points"
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 log = logging.getLogger("ingetrazo.plugins")
 

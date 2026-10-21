@@ -89,27 +89,34 @@ def make_icon(accent_color: QColor | None = None) -> QIcon:
 
 
 class _ThemeWatcher(QObject):
-    """Redraws the icon when the palette or theme changes, and when the
-    accent changed (Preferences repaints the window, it sends no event)."""
+    """Redraws the icon when the theme changes its ink colour, or the
+    accent changed (Preferences repaints the window; it sends no event).
+
+    Installed on the toolbar alone, never on the whole application: Qt
+    sends ``PaletteChange`` to every widget whose palette or stylesheet
+    changes, so an application-wide filter rebuilt the icon each time
+    another extension restyled its own widgets (many times per second with
+    some of them). A theme switch re-palettes the toolbar too, so it still
+    arrives here, and the icon is redrawn only if a colour really changed."""
+
+    _EVENTS = (QEvent.ApplicationPaletteChange, QEvent.PaletteChange,
+               QEvent.ThemeChange, QEvent.Paint)
 
     def __init__(self, action: QAction, parent) -> None:
         super().__init__(parent)
         self.action = action
-        self.rgb = accent().rgb()
+        self.colours = self._colours()
 
-    def redraw(self) -> None:
-        colour = accent()
-        self.rgb = colour.rgb()
-        self.action.setIcon(make_icon(colour))
+    @staticmethod
+    def _colours() -> tuple:
+        return _ink().rgba(), accent().rgba()
 
     def eventFilter(self, obj, event) -> bool:  # noqa: N802 — Qt override
-        kind = event.type()
-        if kind in (QEvent.ApplicationPaletteChange, QEvent.PaletteChange,
-                    QEvent.ThemeChange):
-            self.redraw()
-        elif kind == QEvent.Paint and obj is self.parent():
-            if accent().rgb() != self.rgb:
-                self.redraw()
+        if obj is self.parent() and event.type() in self._EVENTS:
+            colours = self._colours()
+            if colours != self.colours:
+                self.colours = colours
+                self.action.setIcon(make_icon())
         return False
 
 
@@ -167,7 +174,6 @@ class ToolbarSwitch:
         act.triggered.connect(self._run)
         tb.addAction(act)
         self._watcher = _ThemeWatcher(act, tb)
-        QApplication.instance().installEventFilter(self._watcher)
         tb.installEventFilter(self._watcher)
         tb.visibilityChanged.connect(self._visibility_changed)
         return tb

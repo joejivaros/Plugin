@@ -4,7 +4,7 @@ A plugin that **cleans a model** in one undo step: it purges what is unused
 and repairs the geometry left behind by imports and editing. You pick which
 items to clean.
 
-- Plugin ID: `cleaning` · Version: 0.1.1 · License: GPL-3.0-or-later
+- Plugin ID: `cleaning` · Version: 0.1.2 · License: GPL-3.0-or-later
 - Date: October 21 2026
 - Needs IngeTrazo ≥ 0.5.9 (extension API 2); tested with 0.5.9.
 - Author: G. Andreotti · Contact: https://github.com/joejivaros

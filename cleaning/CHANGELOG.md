@@ -2,6 +2,15 @@
 
 All notable changes; newest first. Versions follow Semantic Versioning.
 
+## 0.1.2 — 2026-10-21
+
+- Fixed: the toolbar icon's theme watcher was installed on the whole
+  application and redrew the icon on every widget's palette change. With
+  extensions that restyle widgets on each mouse event, this slowed
+  IngeTrazo down a lot (reported for Divide Points, which shares the code).
+  It now watches only its own toolbar, and redraws only when the ink or
+  accent colour really changed.
+
 ## 0.1.1 — 2026-10-21
 
 - Fixed: after cleaning some models, saving failed with "list index out of

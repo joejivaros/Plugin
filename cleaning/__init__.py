@@ -3,16 +3,16 @@
 """
 Plugin-ID:      cleaning
 Name:           Cleaning
-Version:        0.1.1
-Revision:       git tag cleaning-v0.1.1
-Release-Date:   2026-10-21T09:03:24Z
+Version:        0.1.2
+Revision:       git tag cleaning-v0.1.2
+Release-Date:   2026-10-21T19:24:22Z
 Author:         G. Andreotti
 Contact:        https://github.com/joejivaros
 IngeTrazo:      >=0.5.9 (tested 0.5.9)
 AI-Assistance:  full
                 - Claude Opus 5.5 (claude-opus-5-5): all code, tests,
-                  translations and documentation of versions 0.1.0 and
-                  0.1.1, and the QPainter-drawn toolbar icon
+                  translations and documentation of versions 0.1.0 to
+                  0.1.2, and the QPainter-drawn toolbar icon
 Dependencies:   none
 Permissions:    none
 Description:    Cleans the model in one undo step: erases stray edges,
@@ -29,7 +29,7 @@ from .texts import t
 
 PLUGIN_ID = "cleaning"
 NAME = "Cleaning"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 
 log = logging.getLogger("ingetrazo.plugins")
 

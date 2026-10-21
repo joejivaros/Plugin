@@ -3,9 +3,9 @@
 A plugin that places **visible measurement / guide points** along
 the selected lines and curves.
 
-- Plugin ID: `divide_points` · Version: 0.2.1 · License: GPL-3.0-or-later
-- Date: October 12 2026
-- Needs IngeTrazo ≥ 0.5.7 (extension API 2); tested with 0.5.7.
+- Plugin ID: `divide_points` · Version: 0.2.2 · License: GPL-3.0-or-later
+- Date: October 21 2026
+- Needs IngeTrazo ≥ 0.5.7 (extension API 2); tested with 0.5.7 and 0.5.9.
 - Author: G. Andreotti · Contact: https://github.com/joejivaros
 - Developed with the assistance of Claude AI, Opus 5.5 (Medium)
 

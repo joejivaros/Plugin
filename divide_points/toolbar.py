@@ -65,16 +65,29 @@ def make_icon() -> QIcon:
 
 
 class _ThemeWatcher(QObject):
-    """Redraws the icon when the palette or theme changes."""
+    """Redraws the icon when the theme changes its ink colour.
+
+    Installed on the toolbar alone, never on the whole application: Qt
+    sends ``PaletteChange`` to every widget whose palette or stylesheet
+    changes, so an application-wide filter rebuilt the icon each time
+    another extension restyled its own widgets (many times per second with
+    some of them). A theme switch re-palettes the toolbar too, so it still
+    arrives here, and the icon is redrawn only if the ink really changed."""
+
+    _EVENTS = (QEvent.ApplicationPaletteChange, QEvent.PaletteChange,
+               QEvent.ThemeChange)
 
     def __init__(self, action: QAction, parent) -> None:
         super().__init__(parent)
         self.action = action
+        self.ink = _ink().rgba()
 
     def eventFilter(self, obj, event) -> bool:  # noqa: N802 — Qt override
-        if event.type() in (QEvent.ApplicationPaletteChange,
-                            QEvent.PaletteChange, QEvent.ThemeChange):
-            self.action.setIcon(make_icon())
+        if obj is self.parent() and event.type() in self._EVENTS:
+            ink = _ink().rgba()
+            if ink != self.ink:
+                self.ink = ink
+                self.action.setIcon(make_icon())
         return False
 
 
@@ -127,7 +140,7 @@ class ToolbarSwitch:
         act.triggered.connect(self._run)
         tb.addAction(act)
         self._watcher = _ThemeWatcher(act, tb)
-        QApplication.instance().installEventFilter(self._watcher)
+        tb.installEventFilter(self._watcher)
         tb.visibilityChanged.connect(self._visibility_changed)
         return tb
 

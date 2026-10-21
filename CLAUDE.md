@@ -14,14 +14,16 @@ Keywords: **MUST** = never skip. **SHOULD** = default; explain any deviation.
 - Read `docs/plugins.md` and `CONTRIBUTING.md` in the IngeTrazo repo if they
   are available. The plugin API is 0.x and may have changed since this file
   was written; the repo docs win over this file on API details.
-- The IngeTrazo repo is NOT in this folder. Clone it into a scratch folder to
-  read the source (`core/`, `views/extension_api.py`, `tools/`); the version
-  is in `core/version.py`. On this Windows machine git's OpenSSL lacks the CA
-  store: use `git -c http.sslBackend=schannel clone --depth 1 <url>`.
-- Section 5a lists API facts verified on IngeTrazo 0.5.7 and re-checked on
-  0.5.8; re-check them in the source when targeting another version. A
-  local 0.5.8 checkout is at
-  `D:\Documents\Developement\IngeTrazo\Sources\ingetrazo-main`.
+- The IngeTrazo repo is NOT in this folder. A local checkout is at
+  `../Sources/ingetrazo-main` (0.5.9 on 2026-10-21; Linux path
+  `/run/media/gautier/Data/Documents/Developement/IngeTrazo/Sources/ingetrazo-main`).
+  Read the source there (`core/`, `views/extension_api.py`, `tools/`); the
+  version is in `core/version.py`. To fetch a newer one, clone into a
+  scratch folder (on the old Windows machine git's OpenSSL lacked the CA
+  store: `git -c http.sslBackend=schannel clone --depth 1 <url>`).
+- Section 5a lists API facts verified on IngeTrazo 0.5.7, re-checked on
+  0.5.8, and extended on 0.5.9 (marked "0.5.9"); re-check them in the
+  source when targeting another version.
 - Use the bundled reference plugins (`plugins/model_info.py`,
   `plugins/solid_inspector.py`, `plugins/ai_assistant.py`) as models.
 - Ask the user for author name, contact and target IngeTrazo version if they
@@ -107,7 +109,9 @@ Plugin ID:
     `core.i18n.current_language()`. The language is set before plugins
     load, so translating class attributes at import time works.
   - A plugin catalog is only used for a language IngeTrazo itself offers.
-    In 0.5.8 those are en, es, fr, de, pl, it, id, pt-BR, zh-CN.
+    In 0.5.8 those are en, es, fr, de, pl, it, id, pt-BR, zh-CN; 0.5.9
+    adds ru. Reuse the host's wording from its `i18n/<lang>.json` for menu
+    terms (e.g. es "Edición ▸ Deshacer", fr "Calques" for layers).
   - Enforce all this with a test that collects the `t("...")` literals via
     `ast` (see `divide_points/tests/test_i18n.py`).
 - **English** for identifiers, comments, docstrings and commit messages.
@@ -163,7 +167,7 @@ MUST be declared in `Permissions:` and explained in the README.
 - Semantic Versioning: MAJOR = breaking change to saved data or behaviour,
   MINOR = feature, PATCH = fix. Add a CHANGELOG entry for every version.
 
-## 5a. API facts learned (verified on IngeTrazo 0.5.7, re-checked 0.5.8)
+## 5a. API facts learned (verified on IngeTrazo 0.5.7, re-checked 0.5.8, extended 0.5.9)
 
 - **32-bit coordinates.** `QVector3D`, used by vertices and guides, stores
   32-bit floats. Before comparing or keying a computed (64-bit) point
@@ -238,12 +242,95 @@ MUST be declared in `Permissions:` and explained in the README.
     This is an internal: fall back to a plain `QToolBar`, and list it in the
     README.
   - `setup(app)` runs after the window restored its saved layout, so a
-    plugin toolbar's position is not restored between sessions.
+    plugin toolbar's position is not restored between sessions (0.5.8).
+    In 0.5.9 the `MainWindow.load_extensions` docstring says the saved
+    layout is applied again when a plugin adds a toolbar during start-up;
+    not verified yet.
   - Keep on/off choices in `QSettings` under `plugins/<plugin_id>/…`. That
     is IngeTrazo's own per-user settings store.
 - **Icons.** Draw them with QPainter like `views/icons.py`: 48 px, the
-  palette's `windowText` as ink, a 3 px round pen and the orange accent
-  `QColor(243, 115, 41)`. Redraw on `PaletteChange` / `ThemeChange`.
+  palette's `windowText` as ink, a 3 px round pen and the accent. Redraw on
+  `PaletteChange` / `ThemeChange`, but:
+  - **Never install the event filter on the whole application.** Qt sends
+    `PaletteChange` and `StyleChange` to every widget whose palette or
+    stylesheet changes. Some extensions restyle widgets on each mouse
+    event, so an app-wide filter rebuilt the icon constantly: a click went
+    from 2 s to 15 s in the reviewers' 0.5.9 test (divide_points 0.2.1,
+    fixed in 0.2.2).
+  - Install the filter on your own toolbar; a theme switch re-palettes it
+    too, with exactly one `PaletteChange`. Redraw only when the colours
+    (ink, accent) actually changed.
+  - 0.5.9: the accent is user-selectable (Preferences ▸ General ▸ "Accent
+    colour:"). Read it with `views.theme.accent_color()` and fall back to
+    the orange `QColor(243, 115, 41)` on older hosts.
+  - Changing the accent sends no event: `views.theme.apply_accent` only
+    repaints the host's own icons (`icon_key` property, which plugins can't
+    use) and calls `update()` on top-level windows. To follow it, filter the
+    toolbar's `QEvent.Paint` and redraw when `accent_color().rgb()` changed
+    (see `cleaning/toolbar.py`).
+- **Mesh internals (0.5.9).**
+  - `mesh.vertices`, `edges` and `faces` are plain lists, so
+    `remove_edge` / `remove_face` and `e in mesh.edges` are O(n). Removing
+    thousands one by one is quadratic. For bulk removal, discard the edge
+    from `v0.edges` / `v1.edges`, rebuild `mesh.edges[:]` once, then set
+    `mesh._chunk_dirty = True` and bump `mesh._mut_serial` as the
+    primitives do (`cleaning/geometry.py: remove_edges`).
+  - `Face.normal()` returns `(0, 0, 1)` for a zero-area face, so such faces
+    look coplanar with anything horizontal. Erase degenerate faces before
+    any coplanar test.
+  - `Mesh.dissolve_edge` treats faces as coplanar at `abs(dot) >= 0.999`
+    (about 2.5°) and flips opposite-wound faces. That is too loose for a
+    clean-up: test the normals yourself first.
+  - `Mesh.dissolve_coplanar_pair` raises `IndexError` when the two faces'
+    union has no outline. It raises before changing anything, so it is safe
+    to catch.
+  - Imported `.skp` geometry can have face loops that repeat a corner
+    (`[a, a, b, c]`) plus self-loop edges (`e.v0 is e.v1`). `_splice_loops`
+    (behind `dissolve_edge`) refuses such faces, and `remove_face` can
+    leave them on an edge's radial `faces` list.
+  - `capture_state()` / `restore_state()` keep object identity and include
+    `finterior` (interior marks) in 0.5.9. They materialise a lazily loaded
+    `DeferredMesh`.
+- **Commands (0.5.9).**
+  - `History.execute` snapshots and, on an exception, restores only
+    `scene.mesh`. A command that edits other meshes (groups) or the
+    registries must roll itself back before re-raising.
+  - Raising `core.history.CommandRejected(msg)` from `do` leaves no undo
+    step and sets `history.last_rejected = msg` (`last_error` stays None).
+    Use it for "nothing to do", after restoring what you touched.
+  - After editing group meshes or face attrs, call
+    `core.history._dirty_group_chunks(scene)` and bump `scene.version`.
+  - Dry run ("preview"): run the command's `do`, then `undo`, then put back
+    `scene.version` and the selection. The document then stays clean
+    (`window._is_dirty()` is False), and the counts can't disagree with the
+    real run.
+- **Whole-model walks (0.5.9).**
+  - `core.purge.iter_meshes(scene)` gives each distinct mesh once (loose,
+    nested groups, kept component definitions; instances share
+    prototypes). Also there: `iter_groups`, `unused_materials`,
+    `unused_layers`, and `core.history.PurgeUnusedCommand`.
+  - While a group is open, `scene.mesh` is the edited mesh (a temporary
+    copy for a component instance), `scene.loose_mesh` the real loose one,
+    `scene.edit_group` the innermost open group and `scene._edit_stack` a
+    list of `{"group", "mesh", "share"}`. Edits to the whole model should
+    wait until the group is closed.
+  - `Group.locked`: the user asked that nothing edits it, so skip it.
+    `scene.kept_components`: definitions kept on purpose, so never purge
+    them. `core.history.group_owner_list(scene, g)` finds the list a nested
+    group lives in.
+- **Materials (0.5.9).** `scene.materials` maps name → `Material(color,
+  texture, opacity, finish)`. `core.materials.register` dedupes by recipe
+  and makes names unique as `"Name (2)"`. A face's paint is
+  `attrs["color"/"texture"/"opacity"]` (what renders) plus `attrs["mat"]`
+  (the name). `attrs["back"]` may be a dict with its own `"mat"`, and a
+  group's paint is `group.material` (a dict). Purged materials take their
+  embedded textures out of the saved `.igz`.
+- **Join Segments (0.5.9).** `core.edits.join_edges(mesh, edges,
+  verdicts)` joins collinear pieces with the host's rules, and
+  `join_preview` is its dry run. It checks every given edge against
+  `mesh.edges` (a list), so handing it a whole big mesh is quadratic: 26 s
+  on bbq.igz. Pre-filter to the edges at `mesh.collapsible_vertex(v)`
+  points, and repeat until nothing joins.
 
 ## 6. Commands
 
@@ -257,12 +344,22 @@ python -m bandit -r <plugin_id>           # security scan (pip install bandit)
 grep -rEn '[A-Za-z0-9+/=]{200,}' <plugin_id>   # flags encoded blobs; must return nothing
 ```
 
-Testing notes (learned on this machine, Windows):
+Testing notes (learned on Windows, then on Linux from 0.5.9):
 
 - **Environment.** Use a venv in a scratch folder with only
-  `PySide6 numpy pytest bandit`. IngeTrazo's `requirements.txt` pulls
-  `openskp` from git, which fails here on SSL, and headless plugin tests do
-  not need it.
+  `PySide6>=6.7,<6.12 numpy pytest bandit`. IngeTrazo's `requirements.txt`
+  pulls `openskp` from git, which failed on Windows on SSL, and headless
+  plugin tests do not need it. On Linux the system `python3` (3.14) has no
+  PySide6. Run the tests with:
+  `INGETRAZO_ROOT=<checkout> QT_QPA_PLATFORM=offscreen <venv>/bin/python -m pytest <plugin_id>/tests -q -c <plugin_id>/tests/pytest.ini`.
+  For a script that loads `.igz` files, put the checkout on `PYTHONPATH`;
+  `formats.igz.load_into(scene, path)` and `save_scene(scene, path)` work
+  headless.
+- **Real models.** Try a plugin on real files as well as on hand-built
+  meshes: `/run/media/gautier/Data/Documents/sketchup/Component/` (e.g.
+  `Cuisine/bbq.igz`, a SketchUp import with zero-area faces, repeated
+  corners and 300 unused materials). Check counts, undo/redo, a
+  save→reload round trip, and time on a big mesh.
 - **Headless runs.** Set `QT_QPA_PLATFORM=offscreen` and
   `INGETRAZO_ROOT=<IngeTrazo checkout>`. Integration tests skip themselves
   when IngeTrazo cannot be imported.
@@ -283,13 +380,25 @@ Testing notes (learned on this machine, Windows):
   test of internals. It loads the user's installed plugins, and an
   installed copy of the plugin under test replaces its
   `ingetrazo_plugin_<id>` module: monkeypatch
-  `core.extensions.user_plugins_dir` to an empty folder first. Set `QT_QPA_FONTDIR=C:/Windows/Fonts` when grabbing a
-  screenshot, or text renders as boxes.
+  `core.extensions.user_plugins_dir` to an empty folder first. Set
+  `QT_QPA_FONTDIR=C:/Windows/Fonts` when grabbing a screenshot on
+  Windows, or text renders as boxes (on Linux the fonts work as is).
+  - 0.5.9: the window runs `setup()` right away unless it was built with
+    deferred extensions (as `main.py` does). Copy the plugin into the
+    patched user folder to test it in place. Useful hooks:
+    `win.findChild(QMenu, "<plugin_id>_menu")`, `win._is_dirty()`,
+    `win._on_undo()`. The window re-imports `ingetrazo_plugin_<id>`, so
+    put this test in a file that runs last (`test_zz_main_window.py`).
 - **Bandit.** Run `python -m bandit -r <plugin_id> -x <plugin_id>/tests` for
   the plugin code. B101 (`assert`) in pytest tests is expected.
 - **IngeTrazo's own suite.** The fast suite only matters when IngeTrazo
   itself changes. If its dependencies are missing, say so; don't skip it
   silently.
+
+Release packaging: a `.zip` of the plugin folder without `tests/`, plus a
+catalogue `.toml` with its SHA-256, both in `../release/`. Git tags and
+archive names follow `<plugin_id>-v<version>` (repo joejivaros/Plugin);
+the header's `Revision:` names the same tag.
 
 Run the app with `python main.py`; plugins load from
 `~/.local/share/ingetrazo/plugins/` (Linux), `%APPDATA%\ingetrazo\plugins\`

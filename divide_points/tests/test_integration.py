@@ -80,7 +80,10 @@ def test_plugin_loads_with_a_setup(plugin):
     assert loaded.tools == []
     assert loaded.setup is not None
     assert plugin["pkg"].PLUGIN_ID == KEY
-    assert plugin["pkg"].VERSION == "0.2.1"
+    changelog = (PLUGIN_DIR / "CHANGELOG.md").read_text(encoding="utf-8")
+    newest = next(line for line in changelog.splitlines()
+                  if line.startswith("## "))
+    assert newest.startswith(f"## {plugin['pkg'].VERSION} ")
 
 
 def test_header_matches_constants(plugin):
@@ -368,3 +371,36 @@ def test_toolbar_comes_back_next_session(plugin, doc, qapp, settings):
     _sub, acts = _submenu(app)
     assert acts["Show in toolbar"].isChecked()
     assert win.findChild(QToolBar, f"{KEY}_toolbar") is not None
+
+
+def test_icon_ignores_other_widgets_but_follows_the_theme(plugin, qapp, settings):
+    """Review of 0.5.9: an application-wide filter rebuilt the icon each
+    time another extension restyled one of its widgets."""
+    import importlib
+
+    from PySide6.QtGui import QColor, QPalette
+    from PySide6.QtWidgets import QLabel, QMainWindow
+    toolbar = importlib.import_module("ingetrazo_plugin_divide_points.toolbar")
+    win = QMainWindow()
+    others = [QLabel(str(i), win) for i in range(50)]
+    win.show()
+    switch = toolbar.ToolbarSwitch(win, "divide_points", "T", "tip", lambda: None)
+    switch.set_shown(True)
+    action = switch.toolbar.actions()[0]
+    built = action.icon().cacheKey()
+    for label in others:                       # another extension restyles
+        label.setStyleSheet("color: red")
+        label.setPalette(QPalette(QColor(10, 200, 10)))
+    qapp.processEvents()
+    assert action.icon().cacheKey() == built
+
+    old = qapp.palette()
+    new = QPalette(old)
+    new.setColor(QPalette.WindowText, QColor(250, 10, 10))
+    try:
+        qapp.setPalette(new)                   # the theme changed
+        qapp.processEvents()
+        assert action.icon().cacheKey() != built
+    finally:
+        qapp.setPalette(old)
+        win.close()
